@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Macro Managed - Deliverables</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: white;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #root {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        
+        .circle-container {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        .pulse-animation {
+            animation: pulse 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState } = React;
+        
+        const CircularProgress = ({ percentage, size = 180, strokeWidth = 12, color }) => {
+            const radius = (size - strokeWidth) / 2;
+            const circumference = radius * 2 * Math.PI;
+            const offset = circumference - (percentage / 100) * circumference;
+            
+            return (
+                <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+                    {/* Background circle */}
+                    <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={radius}
+                        stroke="#e5e7eb"
+                        strokeWidth={strokeWidth}
+                        fill="none"
+                    />
+                    {/* Progress circle */}
+                    <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={radius}
+                        stroke={color}
+                        strokeWidth={strokeWidth}
+                        fill="none"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        strokeLinecap="round"
+                        style={{
+                            transition: 'stroke-dashoffset 0.5s ease'
+                        }}
+                    />
+                </svg>
+            );
+        };
+        
+        const DeliverableCircle = ({ retainer, onComplete, onUncomplete }) => {
+            const [isPulsing, setIsPulsing] = React.useState(false);
+            const [animateNumber, setAnimateNumber] = React.useState(false);
+            
+            const totalDeliverables = retainer.deliverables.reduce((sum, d) => sum + d.total, 0);
+            const completedDeliverables = retainer.deliverables.reduce((sum, d) => sum + d.completed, 0);
+            const percentage = totalDeliverables > 0 ? (completedDeliverables / totalDeliverables) * 100 : 0;
+            const isComplete = percentage === 100;
+            
+            const triggerPulse = () => {
+                setIsPulsing(true);
+                setAnimateNumber(true);
+                setTimeout(() => {
+                    setIsPulsing(false);
+                    setAnimateNumber(false);
+                }, 300);
+            };
+            
+            const handleComplete = (idx) => {
+                onComplete(idx);
+                triggerPulse();
+            };
+            
+            const handleUncomplete = (idx) => {
+                onUncomplete(idx);
+                triggerPulse();
+            };
+            
+            return (
+                <div 
+                    className="circle-container"
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        transition: 'all 0.3s ease',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        background: '#f5f7fa',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                        border: '1px solid #e5e7eb'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-8px)';
+                        e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.12)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                    }}
+                >
+                    <div style={{ position: 'relative', marginBottom: '20px' }}>
+                        {/* Total number on top-right */}
+                        <div style={{
+                            position: 'absolute',
+                            top: '-10px',
+                            right: '-15px',
+                            fontSize: '18px',
+                            fontWeight: 'bold',
+                            color: '#6b7280',
+                            fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+                        }}>
+                            {totalDeliverables}
+                        </div>
+                        
+                        {/* Success checkmark when 100% */}
+                        {isComplete && (
+                            <div style={{
+                                position: 'absolute',
+                                top: '-15px',
+                                left: '-15px',
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                background: '#10b981',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontSize: '20px',
+                                fontWeight: 'bold',
+                                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                                animation: 'fadeInUp 0.4s ease-out'
+                            }}>
+                                ✓
+                            </div>
+                        )}
+                        
+                        <div className={isPulsing ? 'pulse-animation' : ''}>
+                            <CircularProgress 
+                                percentage={percentage} 
+                                size={180} 
+                                strokeWidth={12}
+                                color={isComplete ? '#10b981' : retainer.color}
+                            />
+                        </div>
+                        
+                        <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{
+                                fontSize: '48px',
+                                fontWeight: 'bold',
+                                color: isComplete ? '#10b981' : retainer.color,
+                                fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                lineHeight: '1',
+                                transition: 'all 0.3s ease',
+                                transform: animateNumber ? 'scale(1.1)' : 'scale(1)'
+                            }}>
+                                {completedDeliverables}
+                            </div>
+                            <div style={{
+                                fontSize: '13px',
+                                color: '#6b7280',
+                                marginTop: '8px',
+                                fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+                            }}>
+                                completed
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Brand Name */}
+                    <div style={{
+                        marginBottom: '20px',
+                        textAlign: 'center'
+                    }}>
+                        <h3 style={{
+                            fontSize: '20px',
+                            fontWeight: 'bold',
+                            color: '#111827',
+                            fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+                        }}>
+                            {retainer.name}
+                        </h3>
+                    </div>
+                    
+                    {/* Elegant Deliverable Controls */}
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        width: '100%',
+                        maxWidth: '280px'
+                    }}>
+                        {retainer.deliverables.map((deliverable, idx) => (
+                            <div key={idx} style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '8px 12px',
+                                borderRadius: '6px',
+                                transition: 'all 0.2s ease',
+                                cursor: 'pointer'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'white';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'transparent';
+                            }}
+                            >
+                                <div style={{
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    color: '#374151',
+                                    fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                    flex: 1
+                                }}>
+                                    {deliverable.type}
+                                </div>
+                                
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}>
+                                    {/* Clickable chevron to decrease */}
+                                    <div
+                                        onClick={() => deliverable.completed > 0 && handleUncomplete(idx)}
+                                        style={{
+                                            fontSize: '20px',
+                                            fontWeight: '300',
+                                            color: deliverable.completed === 0 ? '#e5e7eb' : '#9ca3af',
+                                            cursor: deliverable.completed === 0 ? 'not-allowed' : 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            userSelect: 'none',
+                                            width: '20px',
+                                            textAlign: 'center'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (deliverable.completed > 0) {
+                                                e.target.style.color = '#374151';
+                                                e.target.style.transform = 'scale(1.2)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (deliverable.completed > 0) {
+                                                e.target.style.color = '#9ca3af';
+                                                e.target.style.transform = 'scale(1)';
+                                            }
+                                        }}
+                                    >
+                                        ‹
+                                    </div>
+                                    
+                                    <div style={{
+                                        fontSize: '15px',
+                                        fontWeight: '600',
+                                        color: '#111827',
+                                        fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                        minWidth: '45px',
+                                        textAlign: 'center',
+                                        transition: 'transform 0.2s ease'
+                                    }}>
+                                        {deliverable.completed}/{deliverable.total}
+                                    </div>
+                                    
+                                    {/* Clickable chevron to increase */}
+                                    <div
+                                        onClick={() => deliverable.completed < deliverable.total && handleComplete(idx)}
+                                        style={{
+                                            fontSize: '20px',
+                                            fontWeight: '300',
+                                            color: deliverable.completed >= deliverable.total ? '#e5e7eb' : retainer.color,
+                                            cursor: deliverable.completed >= deliverable.total ? 'not-allowed' : 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            userSelect: 'none',
+                                            width: '20px',
+                                            textAlign: 'center'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (deliverable.completed < deliverable.total) {
+                                                e.target.style.opacity = '0.7';
+                                                e.target.style.transform = 'scale(1.2)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (deliverable.completed < deliverable.total) {
+                                                e.target.style.opacity = '1';
+                                                e.target.style.transform = 'scale(1)';
+                                            }
+                                        }}
+                                    >
+                                        ›
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+        
+        const App = () => {
+            const [retainer, setRetainer] = useState({
+                name: "Macro Managed",
+                color: "#0d1b2a",
+                deliverables: [
+                    { type: "Carousels", total: 10, completed: 0 },
+                    { type: "Reels", total: 20, completed: 0 }
+                ]
+            });
+            
+            const handleComplete = (deliverableIndex) => {
+                const newRetainer = { ...retainer };
+                const deliverable = newRetainer.deliverables[deliverableIndex];
+                if (deliverable.completed < deliverable.total) {
+                    deliverable.completed += 1;
+                    setRetainer(newRetainer);
+                }
+            };
+            
+            const handleUncomplete = (deliverableIndex) => {
+                const newRetainer = { ...retainer };
+                const deliverable = newRetainer.deliverables[deliverableIndex];
+                if (deliverable.completed > 0) {
+                    deliverable.completed -= 1;
+                    setRetainer(newRetainer);
+                }
+            };
+            
+            return (
+                <DeliverableCircle
+                    retainer={retainer}
+                    onComplete={handleComplete}
+                    onUncomplete={handleUncomplete}
+                />
+            );
+        };
+        
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
