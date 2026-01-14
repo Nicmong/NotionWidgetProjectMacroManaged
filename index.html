@@ -62,7 +62,7 @@
     <div id="root"></div>
     
     <script type="text/babel">
-        const { useState } = React;
+        const { useState, useEffect } = React;
         
         const CircularProgress = ({ percentage, size = 180, strokeWidth = 12, color }) => {
             const radius = (size - strokeWidth) / 2;
@@ -358,14 +358,32 @@
         };
         
         const App = () => {
-            const [retainer, setRetainer] = useState({
-                name: "Macro Managed",
-                color: "#0d1b2a",
-                deliverables: [
-                    { type: "Carousels", total: 10, completed: 0 },
-                    { type: "Reels", total: 20, completed: 0 }
-                ]
-            });
+            // Load saved data from localStorage or use defaults
+            const loadSavedData = () => {
+                const saved = localStorage.getItem('macro-managed-deliverables');
+                if (saved) {
+                    try {
+                        return JSON.parse(saved);
+                    } catch (e) {
+                        console.error('Error loading saved data:', e);
+                    }
+                }
+                return {
+                    name: "Macro Managed",
+                    color: "#0d1b2a",
+                    deliverables: [
+                        { type: "Carousels", total: 10, completed: 0 },
+                        { type: "Reels", total: 20, completed: 0 }
+                    ]
+                };
+            };
+            
+            const [retainer, setRetainer] = useState(loadSavedData());
+            
+            // Save to localStorage whenever retainer changes
+            React.useEffect(() => {
+                localStorage.setItem('macro-managed-deliverables', JSON.stringify(retainer));
+            }, [retainer]);
             
             const handleComplete = (deliverableIndex) => {
                 const newRetainer = { ...retainer };
